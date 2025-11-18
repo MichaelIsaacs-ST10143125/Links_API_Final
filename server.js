@@ -17,7 +17,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/chats", chatsRoutes);
 app.use("/api/notifications", notificationRoutes);
 
-// server.js — change this portion
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
+const PORT = 5000;
+app.listen(PORT, '0.0.0.0', () => console.log(` Server running on port ${PORT}`));
 
