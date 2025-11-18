@@ -1,7 +1,9 @@
 import mysql from "mysql2";
+import fs from "fs";
 import dotenv from "dotenv";
 
 dotenv.config();
+const ca = fs.readFileSync("./certs/ca.pem");
 
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
@@ -9,7 +11,10 @@ const db = mysql.createConnection({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   port: process.env.DB_PORT,
-  ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: true } : undefined
+  ssl: {
+    ca: ca,
+    rejectUnauthorized: true
+  }
 });
 
 db.connect((err) => {
