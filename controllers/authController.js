@@ -1,6 +1,8 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
+import db from "../db.js";
+
 
 const SECRET_KEY = process.env.JWT_SECRET || "default_secret_key";
 let currentUser = null;
@@ -34,7 +36,7 @@ export const login = (req, res) => {
     res.json({
       message: "Login successful",
       token,
-      user: { id: user.user_id, name: user.name, email: user.email }
+      user: { id: user.user_id, name: user.name, email: user.email, bio: user.bio}
     });
   });
 };
@@ -57,4 +59,47 @@ export const searchUsers = (req, res) => {
     res.json(results);
   });
 };
+
+// Token
+export const updateFcmToken = (req, res) => {
+  const { userId, fcmToken } = req.body;
+
+  if (!userId || !fcmToken) {
+    return res.status(400).json({ message: "userId and fcmToken are required" });
+  }
+
+  const sql = "UPDATE users SET fcm_token = ? WHERE user_id = ?";
+  db.query(sql, [fcmToken, userId], (err, result) => {
+    if (err) {
+      console.error("Error updating FCM token:", err);
+      return res.status(500).json({ message: "Error updating FCM token", error: err });
+    }
+
+    return res.status(200).json({ message: "FCM token updated successfully" });
+  });
+};
+
+// Update Bio
+export const updateBio = (req, res) => {
+  const { userId, bio } = req.body;
+
+  if (!userId || bio === undefined) {
+    return res.status(400).json({ message: "userId and bio required" });
+  }
+
+  db.query(
+    "UPDATE users SET bio = ? WHERE user_id = ?",
+    [bio, userId],
+    (err, result) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Database error" });
+      }
+
+      res.status(200).json({ message: "Bio updated!" });
+    }
+  );
+};
+
+
 

@@ -3,3 +3,6 @@ node_modules/
 
 # Ignore environment file
 .env
+
+# Ingnore firebase key
+firebase-key.json

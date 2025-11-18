@@ -1,4 +1,5 @@
 import db from "../db.js";
+import { createNotification } from "./notificationController.js";
 
 export const createChat = (req, res) => {
   const { user1_id, user2_id } = req.body;
@@ -62,29 +63,49 @@ export const sendMessage = (req, res) => {
   const { chat_id, sender_id, message_text } = req.body;
 
   if (!chat_id || !sender_id || !message_text) {
-    return res.status(400).json({ message: "chat_id, sender_id, and message_text are required" });
+    return res.status(400).json({ message: "Missing fields" });
   }
 
   const insertQuery = `
-    INSERT INTO messages (chat_id, sender_id, message_text)
-    VALUES (?, ?, ?)
+      INSERT INTO messages (chat_id, sender_id, message_text)
+      VALUES (?, ?, ?)
   `;
 
   db.query(insertQuery, [chat_id, sender_id, message_text], (err, result) => {
-    if (err) return res.status(500).json({ message: "Error sending message", error: err });
+    if (err) return res.status(500).json({ error: err });
 
-    res.status(201).json({
-      message: "Message sent successfully",
-      data: {
-        message_id: result.insertId,
-        chat_id,
-        sender_id,
-        message_text,
-        created_at: new Date()
+    const chatQuery = "SELECT user1_id, user2_id FROM chats WHERE chat_id = ?";
+
+    db.query(chatQuery, [chat_id], async (err, chatResult) => {
+      if (err) return console.error(err);
+
+      const chat = chatResult[0];
+
+      const receiverId =
+        sender_id == chat.user1_id ? chat.user2_id : chat.user1_id;
+
+      // ⭐ CLEAN: Call notification controller
+      try {
+        await createNotification(receiverId, sender_id, message_text);
+      } catch (e) {
+        console.error("Notification error:", e);
       }
+
+      // Response to client
+      res.status(201).json({
+        message: "Message sent",
+        data: {
+          message_id: result.insertId,
+          chat_id,
+          sender_id,
+          message_text,
+          created_at: new Date()
+        }
+      });
     });
   });
 };
+
 
 export const getChatMessages = (req, res) => {
   const { chatId } = req.params;
